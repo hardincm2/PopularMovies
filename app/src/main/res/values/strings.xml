@@ -1,3 +1,14 @@
 <resources>
-    <string name="app_name">PopularMovies</string>
+    <string name="app_name">Movie Finder</string>
+    <string name="movie_detail_activity_title">Movie Details</string>
+    <string name="action_sort">Sort by</string>
+    <string name="action_settings">Settings</string>
+    <string name="submenu_sort_popular">Sort by popular</string>
+    <string name="submenu_sort_top_rated">Sort by top rated</string>
+
+    <string name="action_settings_toast_message">No settings are currently supported!</string>
+
+    <!-- Strings that need to be formatted with a paramater -->
+    <string name="movie_detail_runtime_formattable">%smin</string>
+    <string name="movie_detail_rating_formattable">%s/10</string>
 </resources>
