@@ -1,79 +1,92 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <android.support.v7.widget.Toolbar
-        android:id="@+id/my_toolbar"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="@color/colorPrimary"
-        android:elevation="4dp"
-        app:theme="@style/ToolBarStyle"
-        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
-
-    <TextView
-        android:id="@+id/tv_movie_title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/colorSecondary"
-        android:textSize="36sp"
-        android:textColor="@android:color/white"
-        android:paddingTop="35dp"
-        android:paddingRight="10dp"
-        android:paddingBottom="35dp"
-        android:paddingLeft="10dp"/>
-
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="8dp">
-
-        <ImageView
-            android:id="@+id/iv_movie_detail_poster"
-            android:layout_width="180dp"
-            android:layout_height="wrap_content"
-            android:scaleType="fitXY"
-            android:adjustViewBounds="true"
-            android:paddingRight="40dp"
-            android:paddingLeft="20dp"/>
+        android:layout_height="match_parent">
 
         <LinearLayout
             android:orientation="vertical"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <android.support.v7.widget.Toolbar
+                android:id="@+id/my_toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                android:background="@color/colorPrimary"
+                android:elevation="4dp"
+                app:theme="@style/ToolBarStyle"
+                app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
 
             <TextView
-                android:id="@+id/tv_movie_release_year"
-                android:layout_width="wrap_content"
+                android:id="@+id/tv_movie_title"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="28dp"/>
+                android:background="@color/colorSecondary"
+                android:textSize="36sp"
+                android:textColor="@android:color/white"
+                android:paddingTop="35dp"
+                android:paddingRight="10dp"
+                android:paddingBottom="35dp"
+                android:paddingLeft="10dp"/>
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="8dp">
+
+                <ImageView
+                    android:id="@+id/iv_movie_detail_poster"
+                    android:layout_width="180dp"
+                    android:layout_height="wrap_content"
+                    android:scaleType="fitXY"
+                    android:adjustViewBounds="true"
+                    android:paddingRight="40dp"
+                    android:paddingLeft="20dp"/>
+
+                <LinearLayout
+                    android:orientation="vertical"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:id="@+id/tv_movie_release_year"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="28dp"/>
+
+                    <TextView
+                        android:id="@+id/tv_movie_duration"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="22dp"
+                        android:textStyle="italic"/>
+
+                    <TextView
+                        android:id="@+id/tv_movie_rating"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="14dp"
+                        android:textStyle="bold"
+                        android:padding="4dp"/>
+                </LinearLayout>
+
+            </LinearLayout>
 
             <TextView
-                android:id="@+id/tv_movie_duration"
-                android:layout_width="wrap_content"
+                android:id="@+id/tv_movie_overview"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="22dp"
-                android:textStyle="italic"/>
+                android:padding="12dp"/>
 
-            <TextView
-                android:id="@+id/tv_movie_rating"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="14dp"
-                android:textStyle="bold"
-                android:padding="4dp"/>
         </LinearLayout>
 
-    </LinearLayout>
+    </ScrollView>
 
-    <TextView
-        android:id="@+id/tv_movie_overview"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="12dp"/>
-
-</LinearLayout>
+</FrameLayout>
