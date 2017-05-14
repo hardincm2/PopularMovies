@@ -6,17 +6,24 @@ import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.brassbeluga.popularmovies.R;
 import com.brassbeluga.popularmovies.listener.UpdatedMovieDetailsListener;
+import com.brassbeluga.popularmovies.listener.UpdatedMovieVideosListener;
 import com.brassbeluga.popularmovies.model.MovieDetails;
 import com.brassbeluga.popularmovies.model.MovieInfo;
+import com.brassbeluga.popularmovies.model.MovieVideo;
+import com.brassbeluga.popularmovies.model.MovieVideosResponse;
 import com.brassbeluga.popularmovies.service.MovieDbService;
 import com.brassbeluga.popularmovies.util.DateFormatUtils;
 import com.squareup.picasso.Picasso;
@@ -32,13 +39,15 @@ import static com.brassbeluga.popularmovies.service.MovieDbService.BASE_IMAGE_UR
  * Activity responsible for the movie detail view created
  * after selecting a movie from the MainActivity
  */
-public class MovieDetailActivity extends AppCompatActivity implements UpdatedMovieDetailsListener {
+public class MovieDetailActivity extends AppCompatActivity
+        implements UpdatedMovieDetailsListener, UpdatedMovieVideosListener {
     private static final String TAG = MovieDetailActivity.class.getSimpleName();
 
     @Inject
     MovieDbService movieDbService;
 
     private MovieInfo movieInfo;
+    private ViewGroup movieVideoContainer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,6 +73,8 @@ public class MovieDetailActivity extends AppCompatActivity implements UpdatedMov
             return;
         }
 
+        movieVideoContainer = (ViewGroup) findViewById(R.id.movie_videos_container);
+
         TextView movieTitleTextView = (TextView) findViewById(R.id.tv_movie_title);
         movieTitleTextView.setText(movieInfo.title);
 
@@ -82,7 +93,9 @@ public class MovieDetailActivity extends AppCompatActivity implements UpdatedMov
         TextView movieRatingTextView = (TextView) findViewById(R.id.tv_movie_rating);
         movieRatingTextView.setText(movieRatingString);
 
+        // Trigger the movie details and movie videos fetch requests
         movieDbService.getMovieDetails(this, movieInfo.id);
+        movieDbService.getMovieVideos(this, movieInfo.id);
     }
 
     @Override
@@ -111,5 +124,15 @@ public class MovieDetailActivity extends AppCompatActivity implements UpdatedMov
         movieDurationString = String.format(movieDurationString, Long.toString(movieDetails.runtime));
         TextView movieDurationTextView = (TextView) findViewById(R.id.tv_movie_duration);
         movieDurationTextView.setText(movieDurationString);
+    }
+
+    @Override
+    public void movieVideosUpdated(MovieVideosResponse movieVideosResponse) {
+        LayoutInflater layoutInflater = getLayoutInflater();
+        for (MovieVideo movieVideo : movieVideosResponse.results) {
+            View videoView = getLayoutInflater().inflate(R.layout.movie_trailer_item, movieVideoContainer);
+            TextView tvMovieTrailer = (TextView) videoView.findViewById(R.id.tv_movie_trailer);
+            tvMovieTrailer.setText("Poop");
+        }
     }
 }

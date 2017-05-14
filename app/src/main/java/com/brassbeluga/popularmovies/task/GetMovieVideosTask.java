@@ -1,9 +1,11 @@
 package com.brassbeluga.popularmovies.task;
 
+import android.os.AsyncTask;
 import android.util.Log;
 
-import com.brassbeluga.popularmovies.listener.UpdatedMovieInfoListener;
+import com.brassbeluga.popularmovies.listener.UpdatedMovieVideosListener;
 import com.brassbeluga.popularmovies.model.MovieInfoResponse;
+import com.brassbeluga.popularmovies.model.MovieVideosResponse;
 import com.brassbeluga.popularmovies.util.NetworkUtils;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -18,7 +20,7 @@ import lombok.Data;
 /**
  * Asynchronous task to fetch movie vidoes on a background thread.
  */
-public class GetMovieVideosTask {
+public class GetMovieVideosTask extends AsyncTask<GetMovieVideosTask.TaskRequestInput, Void, String> {
     private static final String TAG = GetMovieInfoTask.class.getSimpleName();
 
     private GetMovieVideosTask.TaskRequestInput input;
@@ -27,7 +29,7 @@ public class GetMovieVideosTask {
     public GetMovieVideosTask() {}
 
     @Override
-    protected String doInBackground(GetMovieInfoTask.TaskRequestInput... requestUrl) {
+    protected String doInBackground(GetMovieVideosTask.TaskRequestInput... requestUrl) {
         input = requestUrl[0];
         try {
             return NetworkUtils.getResponseFromHttpUrl(input.getTargetUrl());
@@ -41,8 +43,8 @@ public class GetMovieVideosTask {
     protected void onPostExecute(String jsonResponse) {
         super.onPostExecute(jsonResponse);
         try {
-            MovieInfoResponse movieInfoResponse = new Gson().fromJson(jsonResponse, MovieInfoResponse.class);
-            input.getListener().movieInfoUpdated(movieInfoResponse);
+            MovieVideosResponse movieVideosResponse = new Gson().fromJson(jsonResponse, MovieVideosResponse.class);
+            input.getListener().movieVideosUpdated(movieVideosResponse);
         } catch (JsonSyntaxException ex) {
             Log.e(TAG, "Error reading JSON response", ex);
         }
@@ -51,6 +53,6 @@ public class GetMovieVideosTask {
     @Data
     public static class TaskRequestInput {
         private URL targetUrl;
-        private UpdatedMovieInfoListener listener;
+        private UpdatedMovieVideosListener listener;
     }
 }

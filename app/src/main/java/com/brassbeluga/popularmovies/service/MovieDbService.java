@@ -3,9 +3,11 @@ package com.brassbeluga.popularmovies.service;
 
 import com.brassbeluga.popularmovies.listener.UpdatedMovieDetailsListener;
 import com.brassbeluga.popularmovies.listener.UpdatedMovieInfoListener;
+import com.brassbeluga.popularmovies.listener.UpdatedMovieVideosListener;
 import com.brassbeluga.popularmovies.model.MovieFilter;
 import com.brassbeluga.popularmovies.task.GetMovieDetailsTask;
 import com.brassbeluga.popularmovies.task.GetMovieInfoTask;
+import com.brassbeluga.popularmovies.task.GetMovieVideosTask;
 import com.brassbeluga.popularmovies.util.NetworkUtils;
 
 import java.net.URL;
@@ -36,12 +38,15 @@ public class MovieDbService {
 
     private final Provider<GetMovieInfoTask> getMovieInfoTaskProvider;
     private final Provider<GetMovieDetailsTask> getMovieDetailsTaskProvider;
+    private final Provider<GetMovieVideosTask> getMovieVideosTaskProvider;
 
     @Inject
     public MovieDbService(Provider<GetMovieInfoTask> getMovieInfoTaskProvider,
-                          Provider<GetMovieDetailsTask> getMovieDetailsTaskProvider) {
+                          Provider<GetMovieDetailsTask> getMovieDetailsTaskProvider,
+                          Provider<GetMovieVideosTask> getMovieVideosTaskProvider) {
         this.getMovieInfoTaskProvider = getMovieInfoTaskProvider;
         this.getMovieDetailsTaskProvider = getMovieDetailsTaskProvider;
+        this.getMovieVideosTaskProvider = getMovieVideosTaskProvider;
     }
 
     /**
@@ -81,11 +86,11 @@ public class MovieDbService {
         getMovieDetailsTaskProvider.get().execute(taskRequestInput);
     }
 
-    public void getMovieVideos(UpdatedMovieDetailsListener listener, long movieId) {
+    public void getMovieVideos(UpdatedMovieVideosListener listener, long movieId) {
         URL targetUrl = NetworkUtils.buildUrl(String.format(MOVIE_VIDEOS_URL, movieId), API_KEY, API_KEY_VALUE);
-        GetMovieDetailsTask.TaskRequestInput taskRequestInput = new GetMovieDetailsTask.TaskRequestInput();
+        GetMovieVideosTask.TaskRequestInput taskRequestInput = new GetMovieVideosTask.TaskRequestInput();
         taskRequestInput.setTargetUrl(targetUrl);
         taskRequestInput.setListener(listener);
-        getMovieDetailsTaskProvider.get().execute(taskRequestInput);
+        getMovieVideosTaskProvider.get().execute(taskRequestInput);
     }
 }
