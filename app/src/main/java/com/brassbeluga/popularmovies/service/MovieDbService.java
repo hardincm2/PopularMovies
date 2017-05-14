@@ -22,6 +22,7 @@ public class MovieDbService {
     public static final String BASE_MOVIE_URL = "https://api.themoviedb.org/3";
     public static final String BASE_IMAGE_URL = "http://image.tmdb.org/t/p/w185/";
     public static final String MOVIE_DETAILS_URL = BASE_MOVIE_URL + "/movie/%s";
+    public static final String MOVIE_VIDEOS_URL = BASE_MOVIE_URL + "/movie/%s/videos";
 
     private static final String POPULAR_MOVIE_URL = BASE_MOVIE_URL + "/movie/popular";
     private static final String TOP_RATED_MOVIE_URL = BASE_MOVIE_URL + "/movie/top_rated";
@@ -74,6 +75,14 @@ public class MovieDbService {
      */
     public void getMovieDetails(UpdatedMovieDetailsListener listener, long movieId) {
         URL targetUrl = NetworkUtils.buildUrl(String.format(MOVIE_DETAILS_URL, movieId), API_KEY, API_KEY_VALUE);
+        GetMovieDetailsTask.TaskRequestInput taskRequestInput = new GetMovieDetailsTask.TaskRequestInput();
+        taskRequestInput.setTargetUrl(targetUrl);
+        taskRequestInput.setListener(listener);
+        getMovieDetailsTaskProvider.get().execute(taskRequestInput);
+    }
+
+    public void getMovieVideos(UpdatedMovieDetailsListener listener, long movieId) {
+        URL targetUrl = NetworkUtils.buildUrl(String.format(MOVIE_VIDEOS_URL, movieId), API_KEY, API_KEY_VALUE);
         GetMovieDetailsTask.TaskRequestInput taskRequestInput = new GetMovieDetailsTask.TaskRequestInput();
         taskRequestInput.setTargetUrl(targetUrl);
         taskRequestInput.setListener(listener);
