@@ -3,10 +3,7 @@ package com.brassbeluga.popularmovies.task;
 import android.os.AsyncTask;
 import android.util.Log;
 
-import com.brassbeluga.popularmovies.listener.UpdatedMovieDetailsListener;
-import com.brassbeluga.popularmovies.listener.UpdatedMovieInfoListener;
-import com.brassbeluga.popularmovies.model.MovieDetails;
-import com.brassbeluga.popularmovies.model.MovieInfoResponse;
+import com.brassbeluga.popularmovies.listener.UpdatedMovieDataListener;
 import com.brassbeluga.popularmovies.util.NetworkUtils;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -19,18 +16,18 @@ import javax.inject.Inject;
 import lombok.Data;
 
 /**
- * Asynchronous task to fetch movie details on a background thread.
+ * Asynchronous task to fetch movie data on a background thread.
  */
-public class GetMovieDetailsTask extends AsyncTask<GetMovieDetailsTask.TaskRequestInput, Void, String> {
-    private static final String TAG = GetMovieInfoTask.class.getSimpleName();
+public class GetMovieDataTask extends AsyncTask<GetMovieDataTask.TaskRequestInput, Void, String> {
+    private static final String TAG = GetMovieDataTask.class.getSimpleName();
 
-    private TaskRequestInput input;
+    private GetMovieDataTask.TaskRequestInput input;
 
     @Inject
-    public GetMovieDetailsTask() {}
+    public GetMovieDataTask() {}
 
     @Override
-    protected String doInBackground(GetMovieDetailsTask.TaskRequestInput... requestUrl) {
+    protected String doInBackground(GetMovieDataTask.TaskRequestInput... requestUrl) {
         input = requestUrl[0];
         try {
             return NetworkUtils.getResponseFromHttpUrl(input.getTargetUrl());
@@ -44,8 +41,8 @@ public class GetMovieDetailsTask extends AsyncTask<GetMovieDetailsTask.TaskReque
     protected void onPostExecute(String jsonResponse) {
         super.onPostExecute(jsonResponse);
         try {
-            MovieDetails movieDetailsResponse = new Gson().fromJson(jsonResponse, MovieDetails.class);
-            input.getListener().movieDetailsUpdated(movieDetailsResponse);
+            Object movieResponse = new Gson().fromJson(jsonResponse, input.responseModel);
+            input.getListener().movieDataUpdated(movieResponse);
         } catch (JsonSyntaxException ex) {
             Log.e(TAG, "Error reading JSON response", ex);
         }
@@ -54,6 +51,7 @@ public class GetMovieDetailsTask extends AsyncTask<GetMovieDetailsTask.TaskReque
     @Data
     public static class TaskRequestInput {
         private URL targetUrl;
-        private UpdatedMovieDetailsListener listener;
+        private Class responseModel;
+        private UpdatedMovieDataListener listener;
     }
 }

@@ -12,7 +12,9 @@ import android.widget.Toast;
 
 import com.brassbeluga.popularmovies.R;
 import com.brassbeluga.popularmovies.adapter.MovieViewRecyclerAdapter;
-import com.brassbeluga.popularmovies.listener.UpdatedMovieInfoListener;
+import com.brassbeluga.popularmovies.data.MovieDbDao;
+import com.brassbeluga.popularmovies.data.model.MovieInfoDto;
+import com.brassbeluga.popularmovies.listener.UpdatedMovieDataListener;
 import com.brassbeluga.popularmovies.model.MovieFilter;
 import com.brassbeluga.popularmovies.model.MovieInfo;
 import com.brassbeluga.popularmovies.model.MovieInfoResponse;
@@ -20,19 +22,27 @@ import com.brassbeluga.popularmovies.service.MovieDbService;
 
 import org.apache.commons.lang3.ArrayUtils;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
 import javax.inject.Inject;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import dagger.android.AndroidInjection;
 
+import static com.brassbeluga.popularmovies.model.MovieFilter.FAVORITE;
 import static com.brassbeluga.popularmovies.model.MovieFilter.POPULAR;
 import static com.brassbeluga.popularmovies.model.MovieFilter.TOP_RATED;
+public class MainActivity extends AppCompatActivity implements UpdatedMovieDataListener {
 
-public class MainActivity extends AppCompatActivity implements UpdatedMovieInfoListener {
+    @Inject MovieDbService movieDbService;
+    @Inject MovieDbDao movieDbDao;
 
-    @Inject
-    MovieDbService movieDbService;
+    @BindView(R.id.rv_movies_list) RecyclerView moviesListView;
+    @BindView(R.id.my_toolbar) Toolbar myToolbar;
 
-    private RecyclerView moviesListView;
     private MovieViewRecyclerAdapter movieViewAdapter;
     private MovieFilter currentMovieFilter;
 
@@ -41,13 +51,12 @@ public class MainActivity extends AppCompatActivity implements UpdatedMovieInfoL
         AndroidInjection.inject(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        ButterKnife.bind(this);
 
         // Configure the action bar for the main activity.
-        Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
         setSupportActionBar(myToolbar);
 
         // Prepare the grid recycler view that will house the movie images
-        moviesListView = (RecyclerView) findViewById(R.id.rv_movies_list);
         final GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 2);
         moviesListView.setLayoutManager(gridLayoutManager);
         movieViewAdapter = new MovieViewRecyclerAdapter();
@@ -72,7 +81,10 @@ public class MainActivity extends AppCompatActivity implements UpdatedMovieInfoL
                 if(layoutManager.findLastVisibleItemPosition() >= itemCount - spanCount * 2 - 1){
                     if (!atBottomOfScrollView) {
                         atBottomOfScrollView = true;
-                        movieDbService.getMovieInfo(mainActivity, currentMovieFilter, itemCount);
+
+                        if (currentMovieFilter != FAVORITE) {
+                            movieDbService.getMovieInfo(mainActivity, currentMovieFilter, itemCount);
+                        }
                     }
                 } else {
                     atBottomOfScrollView = false;
@@ -115,6 +127,26 @@ public class MainActivity extends AppCompatActivity implements UpdatedMovieInfoL
                     movieDbService.getMovieInfo(this, currentMovieFilter, 0);
                 } // Else the user is selecting filter by top rated when we are already displaying top rated movies.
                 return true;
+            case R.id.menu_sort_favorites :
+                if (currentMovieFilter != FAVORITE) {
+                    List<MovieInfoDto> movieInfoDtos = movieDbDao.readFavoriteMovies();
+                    List<MovieInfo> movieInfos = new ArrayList<>();
+                    for (MovieInfoDto movieInfoDto : movieInfoDtos) {
+                        movieInfos.add(movieInfoDto.toMovieInfo());
+                    }
+                    if (movieInfos.isEmpty()) {
+                        // The user hasn't favorited any movies yet, so we will not update the movies list and instead will
+                        // just show a toast to inform them.
+                        Toast settingsToast = Toast.makeText(this, R.string.toast_no_favorites, Toast.LENGTH_SHORT);
+                        settingsToast.show();
+                    } else {
+                        item.setChecked(true);
+                        currentMovieFilter = MovieFilter.FAVORITE;
+                        movieViewAdapter.setMovieInfos(movieInfos.toArray(new MovieInfo[movieInfos.size()]));
+                        movieViewAdapter.notifyDataSetChanged();
+                    }
+                }
+                return true;
             case R.id.action_settings :
                 Toast settingsToast = Toast.makeText(this, R.string.action_settings_toast_message, Toast.LENGTH_SHORT);
                 settingsToast.show();
@@ -125,20 +157,24 @@ public class MainActivity extends AppCompatActivity implements UpdatedMovieInfoL
     }
 
     @Override
-    public void movieInfoUpdated(MovieInfoResponse movieInfoResponse) {
-        if (movieViewAdapter.getMovieInfos() != null) {
-            // There are already some movies in the view so we need to append the recent movie info
-            // data with existing.
-            MovieInfo[] oldMovieInfos = movieViewAdapter.getMovieInfos();
-            MovieInfo[] newMovieInfos = movieInfoResponse.results;
-            MovieInfo[] allMovieInfos = ArrayUtils.addAll(oldMovieInfos, newMovieInfos);
-            movieViewAdapter.setMovieInfos(allMovieInfos);
-        } else {
-            // No existing movie data is set so we can just set it to our results in the view
-            movieViewAdapter.setMovieInfos(movieInfoResponse.results);
-        }
+    public void movieDataUpdated(Object movieDataResponse) {
+        if (movieDataResponse instanceof MovieInfoResponse) {
+            MovieInfoResponse movieInfoResponse = (MovieInfoResponse) movieDataResponse;
 
-        // Make sure the adapter is aware that we have modified the underlying data.
-        movieViewAdapter.notifyDataSetChanged();
+            if (movieViewAdapter.getMovieInfos() != null) {
+                // There are already some movies in the view so we need to append the recent movie info
+                // data with existing.
+                MovieInfo[] oldMovieInfos = movieViewAdapter.getMovieInfos();
+                MovieInfo[] newMovieInfos = movieInfoResponse.results;
+                MovieInfo[] allMovieInfos = ArrayUtils.addAll(oldMovieInfos, newMovieInfos);
+                movieViewAdapter.setMovieInfos(allMovieInfos);
+            } else {
+                // No existing movie data is set so we can just set it to our results in the view
+                movieViewAdapter.setMovieInfos(movieInfoResponse.results);
+            }
+
+            // Make sure the adapter is aware that we have modified the underlying data.
+            movieViewAdapter.notifyDataSetChanged();
+        }
     }
 }

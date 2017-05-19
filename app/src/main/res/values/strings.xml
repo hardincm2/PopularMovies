@@ -5,10 +5,14 @@
     <string name="action_settings">Settings</string>
     <string name="submenu_sort_popular">Sort by popular</string>
     <string name="submenu_sort_top_rated">Sort by top rated</string>
-
+    <string name="submenu_sort_favorites">Sort by favorites</string>
+    <string name="toast_no_favorites">You have not favorited any movies yet!</string>
     <string name="action_settings_toast_message">No settings are currently supported!</string>
+    <string name="movie_trailers_title">Trailers:</string>
+    <string name="favorite_movie_button_label">Favorite</string>
 
     <!-- Strings that need to be formatted with a paramater -->
     <string name="movie_detail_runtime_formattable">%smin</string>
     <string name="movie_detail_rating_formattable">%s/10</string>
+    <string name="movie_trailer_index_label">Trailer %s</string>
 </resources>

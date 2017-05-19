@@ -2,9 +2,7 @@ package com.brassbeluga.popularmovies.module;
 
 
 import com.brassbeluga.popularmovies.service.MovieDbService;
-import com.brassbeluga.popularmovies.task.GetMovieDetailsTask;
-import com.brassbeluga.popularmovies.task.GetMovieInfoTask;
-import com.brassbeluga.popularmovies.task.GetMovieVideosTask;
+import com.brassbeluga.popularmovies.task.GetMovieDataTask;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -17,9 +15,7 @@ public class ServiceModule {
 
     @Provides
     @Singleton
-    public static MovieDbService provideMovieDbService(Provider<GetMovieInfoTask> getMovieInfoTaskProvider,
-                                                       Provider<GetMovieDetailsTask> getMovieDetailsTaskProvider,
-                                                       Provider<GetMovieVideosTask> getMovieVideosTaskProvider) {
-        return new MovieDbService(getMovieInfoTaskProvider, getMovieDetailsTaskProvider, getMovieVideosTaskProvider);
+    public static MovieDbService provideMovieDbService(Provider<GetMovieDataTask> getMovieDataTaskProvider) {
+        return new MovieDbService(getMovieDataTaskProvider);
     }
 }

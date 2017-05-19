@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.Application;
 
 import com.brassbeluga.popularmovies.component.DaggerMovieApplicationComponent;
+import com.brassbeluga.popularmovies.module.ApplicationModule;
 
 import javax.inject.Inject;
 
@@ -21,7 +22,10 @@ public class MovieApplication extends Application implements HasActivityInjector
     @Override
     public void onCreate() {
         super.onCreate();
-        DaggerMovieApplicationComponent.create().inject(this);
+        DaggerMovieApplicationComponent.builder()
+                .applicationModule(new ApplicationModule(this))
+                .build()
+                .inject(this);
     }
 
     @Override

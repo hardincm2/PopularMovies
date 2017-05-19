@@ -3,7 +3,7 @@ package com.brassbeluga.popularmovies.model;
 /**
  * Movie details response POJO. Response from TheMovieDB can be deserialized into this object.
  */
-public class MovieDetails {
+public class MovieDetailsResponse {
     public long runtime;
 
     /*

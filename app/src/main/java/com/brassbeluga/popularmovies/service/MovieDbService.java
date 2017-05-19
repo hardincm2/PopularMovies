@@ -1,13 +1,13 @@
 package com.brassbeluga.popularmovies.service;
 
 
-import com.brassbeluga.popularmovies.listener.UpdatedMovieDetailsListener;
-import com.brassbeluga.popularmovies.listener.UpdatedMovieInfoListener;
-import com.brassbeluga.popularmovies.listener.UpdatedMovieVideosListener;
+import com.brassbeluga.popularmovies.listener.UpdatedMovieDataListener;
+import com.brassbeluga.popularmovies.model.MovieDetailsResponse;
 import com.brassbeluga.popularmovies.model.MovieFilter;
-import com.brassbeluga.popularmovies.task.GetMovieDetailsTask;
-import com.brassbeluga.popularmovies.task.GetMovieInfoTask;
-import com.brassbeluga.popularmovies.task.GetMovieVideosTask;
+import com.brassbeluga.popularmovies.model.MovieInfoResponse;
+import com.brassbeluga.popularmovies.model.MovieReviewsResponse;
+import com.brassbeluga.popularmovies.model.MovieVideosResponse;
+import com.brassbeluga.popularmovies.task.GetMovieDataTask;
 import com.brassbeluga.popularmovies.util.NetworkUtils;
 
 import java.net.URL;
@@ -25,28 +25,23 @@ public class MovieDbService {
     public static final String BASE_IMAGE_URL = "http://image.tmdb.org/t/p/w185/";
     public static final String MOVIE_DETAILS_URL = BASE_MOVIE_URL + "/movie/%s";
     public static final String MOVIE_VIDEOS_URL = BASE_MOVIE_URL + "/movie/%s/videos";
+    public static final String MOVIE_REVIEWS_URL = BASE_MOVIE_URL + "/movie/%s/reviews";
 
     private static final String POPULAR_MOVIE_URL = BASE_MOVIE_URL + "/movie/popular";
     private static final String TOP_RATED_MOVIE_URL = BASE_MOVIE_URL + "/movie/top_rated";
 
     private static final String API_KEY = "api_key";
-    private static final String API_KEY_VALUE = ""; // Set your API key here.
+    private static final String API_KEY_VALUE = "e9c4363d9137ef79ad0dd426bd002dbb"; // Set your API key here.
 
     private static final String PAGE_KEY = "page";
 
     private static final int RESULTS_PER_PAGE = 20;
 
-    private final Provider<GetMovieInfoTask> getMovieInfoTaskProvider;
-    private final Provider<GetMovieDetailsTask> getMovieDetailsTaskProvider;
-    private final Provider<GetMovieVideosTask> getMovieVideosTaskProvider;
+    private final Provider<GetMovieDataTask> getMovieDataTaskProvider;
 
     @Inject
-    public MovieDbService(Provider<GetMovieInfoTask> getMovieInfoTaskProvider,
-                          Provider<GetMovieDetailsTask> getMovieDetailsTaskProvider,
-                          Provider<GetMovieVideosTask> getMovieVideosTaskProvider) {
-        this.getMovieInfoTaskProvider = getMovieInfoTaskProvider;
-        this.getMovieDetailsTaskProvider = getMovieDetailsTaskProvider;
-        this.getMovieVideosTaskProvider = getMovieVideosTaskProvider;
+    public MovieDbService(Provider<GetMovieDataTask> getMovieDataTaskProvider) {
+        this.getMovieDataTaskProvider = getMovieDataTaskProvider;
     }
 
     /**
@@ -56,7 +51,7 @@ public class MovieDbService {
      * @param movieFilter Filter to determine which movie information to fetch
      * @param movieIndex Index of movies to fetch
      */
-    public void getMovieInfo(UpdatedMovieInfoListener listener, MovieFilter movieFilter, int movieIndex) {
+    public void getMovieInfo(UpdatedMovieDataListener listener, MovieFilter movieFilter, int movieIndex) {
         // We fetch movie info based on a page number. Each page has a fixed number of results so we
         // use this information to determine which page to grab based on the provided index.
         String page = Integer.toString((movieIndex / RESULTS_PER_PAGE) + 1);
@@ -65,11 +60,12 @@ public class MovieDbService {
         String url = movieFilter == MovieFilter.POPULAR ? POPULAR_MOVIE_URL : TOP_RATED_MOVIE_URL;
         URL targetUrl = NetworkUtils.buildUrl(url, API_KEY, API_KEY_VALUE, PAGE_KEY, page);
 
-        // Prepare the task input and thetn execute the GetMovieInfoTask.
-        GetMovieInfoTask.TaskRequestInput taskRequestInput = new GetMovieInfoTask.TaskRequestInput();
+        // Prepare the task input and then execute the GetMovieDataTask.
+        GetMovieDataTask.TaskRequestInput taskRequestInput = new GetMovieDataTask.TaskRequestInput();
         taskRequestInput.setTargetUrl(targetUrl);
         taskRequestInput.setListener(listener);
-        getMovieInfoTaskProvider.get().execute(taskRequestInput);
+        taskRequestInput.setResponseModel(MovieInfoResponse.class);
+        getMovieDataTaskProvider.get().execute(taskRequestInput);
     }
 
     /**
@@ -78,19 +74,30 @@ public class MovieDbService {
      * @param listener Movie details response will be passed via callback to this listener
      * @param movieId Unique identifer for the movie being fetched
      */
-    public void getMovieDetails(UpdatedMovieDetailsListener listener, long movieId) {
+    public void getMovieDetails(UpdatedMovieDataListener listener, long movieId) {
         URL targetUrl = NetworkUtils.buildUrl(String.format(MOVIE_DETAILS_URL, movieId), API_KEY, API_KEY_VALUE);
-        GetMovieDetailsTask.TaskRequestInput taskRequestInput = new GetMovieDetailsTask.TaskRequestInput();
+        GetMovieDataTask.TaskRequestInput taskRequestInput = new GetMovieDataTask.TaskRequestInput();
         taskRequestInput.setTargetUrl(targetUrl);
         taskRequestInput.setListener(listener);
-        getMovieDetailsTaskProvider.get().execute(taskRequestInput);
+        taskRequestInput.setResponseModel(MovieDetailsResponse.class);
+        getMovieDataTaskProvider.get().execute(taskRequestInput);
     }
 
-    public void getMovieVideos(UpdatedMovieVideosListener listener, long movieId) {
+    public void getMovieVideos(UpdatedMovieDataListener listener, long movieId) {
         URL targetUrl = NetworkUtils.buildUrl(String.format(MOVIE_VIDEOS_URL, movieId), API_KEY, API_KEY_VALUE);
-        GetMovieVideosTask.TaskRequestInput taskRequestInput = new GetMovieVideosTask.TaskRequestInput();
+        GetMovieDataTask.TaskRequestInput taskRequestInput = new GetMovieDataTask.TaskRequestInput();
         taskRequestInput.setTargetUrl(targetUrl);
         taskRequestInput.setListener(listener);
-        getMovieVideosTaskProvider.get().execute(taskRequestInput);
+        taskRequestInput.setResponseModel(MovieVideosResponse.class);
+        getMovieDataTaskProvider.get().execute(taskRequestInput);
+    }
+
+    public void getMovieReviews(UpdatedMovieDataListener listener, long movieId) {
+        URL targetUrl = NetworkUtils.buildUrl(String.format(MOVIE_REVIEWS_URL, movieId), API_KEY, API_KEY_VALUE);
+        GetMovieDataTask.TaskRequestInput taskRequestInput = new GetMovieDataTask.TaskRequestInput();
+        taskRequestInput.setTargetUrl(targetUrl);
+        taskRequestInput.setListener(listener);
+        taskRequestInput.setResponseModel(MovieReviewsResponse.class);
+        getMovieDataTaskProvider.get().execute(taskRequestInput);
     }
 }
