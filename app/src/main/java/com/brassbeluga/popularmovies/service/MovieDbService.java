@@ -31,7 +31,7 @@ public class MovieDbService {
     private static final String TOP_RATED_MOVIE_URL = BASE_MOVIE_URL + "/movie/top_rated";
 
     private static final String API_KEY = "api_key";
-    private static final String API_KEY_VALUE = "e9c4363d9137ef79ad0dd426bd002dbb"; // Set your API key here.
+    private static final String API_KEY_VALUE = ""; // Set your API key here.
 
     private static final String PAGE_KEY = "page";
 
@@ -47,7 +47,7 @@ public class MovieDbService {
     /**
      * Get movie metadata information from TheMovieDB
      *
-     * @param listener Movies response will be passed via callback to this listener
+     * @param listener {@link MovieInfoResponse} will be passed via callback to this listener
      * @param movieFilter Filter to determine which movie information to fetch
      * @param movieIndex Index of movies to fetch
      */
@@ -71,7 +71,7 @@ public class MovieDbService {
     /**
      * Gets details about a specific movie
      *
-     * @param listener Movie details response will be passed via callback to this listener
+     * @param listener {@link MovieDetailsResponse} will be passed via callback to this listener
      * @param movieId Unique identifer for the movie being fetched
      */
     public void getMovieDetails(UpdatedMovieDataListener listener, long movieId) {
@@ -83,6 +83,12 @@ public class MovieDbService {
         getMovieDataTaskProvider.get().execute(taskRequestInput);
     }
 
+    /**
+     * Gets movie trailers for a specific movie
+     *
+     * @param listener {@link MovieVideosResponse} will be passed via callback to this listener
+     * @param movieId Unique identifer for the movie being fetched
+     */
     public void getMovieVideos(UpdatedMovieDataListener listener, long movieId) {
         URL targetUrl = NetworkUtils.buildUrl(String.format(MOVIE_VIDEOS_URL, movieId), API_KEY, API_KEY_VALUE);
         GetMovieDataTask.TaskRequestInput taskRequestInput = new GetMovieDataTask.TaskRequestInput();
@@ -92,6 +98,13 @@ public class MovieDbService {
         getMovieDataTaskProvider.get().execute(taskRequestInput);
     }
 
+
+    /**
+     * Gets movie reviews for a specific movie
+     *
+     * @param listener {@link MovieReviewsResponse} will be passed via callback to this listener
+     * @param movieId Unique identifer for the movie being fetched
+     */
     public void getMovieReviews(UpdatedMovieDataListener listener, long movieId) {
         URL targetUrl = NetworkUtils.buildUrl(String.format(MOVIE_REVIEWS_URL, movieId), API_KEY, API_KEY_VALUE);
         GetMovieDataTask.TaskRequestInput taskRequestInput = new GetMovieDataTask.TaskRequestInput();

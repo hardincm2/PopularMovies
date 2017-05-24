@@ -41,6 +41,7 @@ public class GetMovieDataTask extends AsyncTask<GetMovieDataTask.TaskRequestInpu
     protected void onPostExecute(String jsonResponse) {
         super.onPostExecute(jsonResponse);
         try {
+            // Convert the response into the appropriate model provided in the input
             Object movieResponse = new Gson().fromJson(jsonResponse, input.responseModel);
             input.getListener().movieDataUpdated(movieResponse);
         } catch (JsonSyntaxException ex) {

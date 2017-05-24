@@ -32,7 +32,7 @@
         <provider
             android:name="com.brassbeluga.popularmovies.data.MovieContentProvider"
             android:authorities="com.brassbeluga.popularmovies"
-            android:exported="false"/>
+            android:exported="true"/>
     </application>
 
 </manifest>

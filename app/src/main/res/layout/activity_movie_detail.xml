@@ -123,6 +123,31 @@
 
             </LinearLayout>
 
+            <LinearLayout
+                android:id="@+id/movie_reviews_container"
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/movie_reviews_title"
+                    android:textSize="18sp"
+                    android:paddingLeft="12dp"
+                    android:paddingRight="12dp"
+                    android:paddingBottom="12dp"/>
+
+                <ProgressBar
+                    android:id="@+id/pb_movie_reviews"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    style="?android:attr/progressBarStyle">
+                </ProgressBar>
+
+            </LinearLayout>
+
         </LinearLayout>
 
     </ScrollView>

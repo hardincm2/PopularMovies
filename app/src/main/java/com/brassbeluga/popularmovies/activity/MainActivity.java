@@ -24,7 +24,6 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import javax.inject.Inject;
 
@@ -35,6 +34,8 @@ import dagger.android.AndroidInjection;
 import static com.brassbeluga.popularmovies.model.MovieFilter.FAVORITE;
 import static com.brassbeluga.popularmovies.model.MovieFilter.POPULAR;
 import static com.brassbeluga.popularmovies.model.MovieFilter.TOP_RATED;
+import static com.brassbeluga.popularmovies.util.DisplayUtils.getRecyclerViewSpanCount;
+
 public class MainActivity extends AppCompatActivity implements UpdatedMovieDataListener {
 
     @Inject MovieDbService movieDbService;
@@ -45,6 +46,7 @@ public class MainActivity extends AppCompatActivity implements UpdatedMovieDataL
 
     private MovieViewRecyclerAdapter movieViewAdapter;
     private MovieFilter currentMovieFilter;
+    private Menu menu;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,8 +58,11 @@ public class MainActivity extends AppCompatActivity implements UpdatedMovieDataL
         // Configure the action bar for the main activity.
         setSupportActionBar(myToolbar);
 
+        // Generate the span count
+        int spanCount = getRecyclerViewSpanCount(getResources().getConfiguration());
+
         // Prepare the grid recycler view that will house the movie images
-        final GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 2);
+        final GridLayoutManager gridLayoutManager = new GridLayoutManager(this, spanCount);
         moviesListView.setLayoutManager(gridLayoutManager);
         movieViewAdapter = new MovieViewRecyclerAdapter();
         moviesListView.setAdapter(movieViewAdapter);
@@ -98,9 +103,27 @@ public class MainActivity extends AppCompatActivity implements UpdatedMovieDataL
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+
+        if (currentMovieFilter == FAVORITE) {
+            updateAndDisplayFavoriteMovies();
+
+            if (movieViewAdapter.getItemCount() == 0) {
+                // No favorite movies are left, go back to popular movies default.
+                currentMovieFilter = MovieFilter.POPULAR;
+                movieViewAdapter.setMovieInfos(null);
+                movieDbService.getMovieInfo(this, currentMovieFilter, 0);
+                menu.findItem(R.id.menu_sort_popular).setChecked(true);
+            }
+        }
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.main, menu);
+        this.menu = menu;
 
         // Since sorted by popular movies is our default, we will check this
         // menu items radio button upon menu creation.
@@ -129,21 +152,9 @@ public class MainActivity extends AppCompatActivity implements UpdatedMovieDataL
                 return true;
             case R.id.menu_sort_favorites :
                 if (currentMovieFilter != FAVORITE) {
-                    List<MovieInfoDto> movieInfoDtos = movieDbDao.readFavoriteMovies();
-                    List<MovieInfo> movieInfos = new ArrayList<>();
-                    for (MovieInfoDto movieInfoDto : movieInfoDtos) {
-                        movieInfos.add(movieInfoDto.toMovieInfo());
-                    }
-                    if (movieInfos.isEmpty()) {
-                        // The user hasn't favorited any movies yet, so we will not update the movies list and instead will
-                        // just show a toast to inform them.
-                        Toast settingsToast = Toast.makeText(this, R.string.toast_no_favorites, Toast.LENGTH_SHORT);
-                        settingsToast.show();
-                    } else {
+                    boolean favoriteMoviesDisplayed = updateAndDisplayFavoriteMovies();
+                    if (favoriteMoviesDisplayed) {
                         item.setChecked(true);
-                        currentMovieFilter = MovieFilter.FAVORITE;
-                        movieViewAdapter.setMovieInfos(movieInfos.toArray(new MovieInfo[movieInfos.size()]));
-                        movieViewAdapter.notifyDataSetChanged();
                     }
                 }
                 return true;
@@ -176,5 +187,29 @@ public class MainActivity extends AppCompatActivity implements UpdatedMovieDataL
             // Make sure the adapter is aware that we have modified the underlying data.
             movieViewAdapter.notifyDataSetChanged();
         }
+    }
+
+    private boolean updateAndDisplayFavoriteMovies() {
+        List<MovieInfoDto> movieInfoDtos = movieDbDao.readFavoriteMovies();
+        List<MovieInfo> movieInfos = new ArrayList<>();
+        boolean favoriteMoviesDisplayed = false;
+        for (MovieInfoDto movieInfoDto : movieInfoDtos) {
+            movieInfos.add(movieInfoDto.toMovieInfo());
+        }
+        if (movieInfos.isEmpty()) {
+            movieViewAdapter.setMovieInfos(null);
+            movieViewAdapter.notifyDataSetChanged();
+            // The user hasn't favorited any movies yet, so we will not update the movies list and instead will
+            // just show a toast to inform them.
+            Toast settingsToast = Toast.makeText(this, R.string.toast_no_favorites, Toast.LENGTH_SHORT);
+            settingsToast.show();
+        } else {
+            favoriteMoviesDisplayed = true;
+            currentMovieFilter = MovieFilter.FAVORITE;
+            movieViewAdapter.setMovieInfos(movieInfos.toArray(new MovieInfo[movieInfos.size()]));
+            movieViewAdapter.notifyDataSetChanged();
+        }
+
+        return favoriteMoviesDisplayed;
     }
 }

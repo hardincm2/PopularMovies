@@ -1,7 +1,7 @@
 package com.brassbeluga.popularmovies.activity;
 
 import android.content.Intent;
-import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
@@ -26,6 +26,8 @@ import com.brassbeluga.popularmovies.data.model.MovieInfoDto;
 import com.brassbeluga.popularmovies.listener.UpdatedMovieDataListener;
 import com.brassbeluga.popularmovies.model.MovieDetailsResponse;
 import com.brassbeluga.popularmovies.model.MovieInfo;
+import com.brassbeluga.popularmovies.model.MovieReview;
+import com.brassbeluga.popularmovies.model.MovieReviewsResponse;
 import com.brassbeluga.popularmovies.model.MovieVideo;
 import com.brassbeluga.popularmovies.model.MovieVideosResponse;
 import com.brassbeluga.popularmovies.service.MovieDbService;
@@ -34,6 +36,7 @@ import com.brassbeluga.popularmovies.util.NetworkUtils;
 import com.squareup.picasso.Picasso;
 
 import java.net.URL;
+import java.util.Random;
 
 import javax.inject.Inject;
 
@@ -42,6 +45,8 @@ import butterknife.ButterKnife;
 import dagger.android.AndroidInjection;
 
 import static android.view.View.GONE;
+import static com.brassbeluga.popularmovies.contants.ColorConstants.FAVORITED_COLOR_FILTER;
+import static com.brassbeluga.popularmovies.contants.ColorConstants.AUTHOR_COLOR_CODES;
 import static com.brassbeluga.popularmovies.contants.ExtraDataKeys.MOVIE_INFO_EXTRA_DATA;
 import static com.brassbeluga.popularmovies.service.MovieDbService.BASE_IMAGE_URL;
 
@@ -61,6 +66,7 @@ public class MovieDetailActivity extends AppCompatActivity implements UpdatedMov
     @BindView(R.id.my_toolbar) Toolbar myToolbar;
     @BindView(R.id.tv_movie_title) TextView movieTitleTextView;
     @BindView(R.id.movie_videos_container) ViewGroup movieVideoContainer;
+    @BindView(R.id.movie_reviews_container) ViewGroup movieReviewContainer;
     @BindView(R.id.tv_movie_overview) TextView movieOverviewTextView;
     @BindView(R.id.tv_movie_duration) TextView movieDurationTextView;
     @BindView(R.id.iv_movie_detail_poster) ImageView movieDetailImagePoster;
@@ -68,6 +74,7 @@ public class MovieDetailActivity extends AppCompatActivity implements UpdatedMov
     @BindView(R.id.tv_movie_rating) TextView movieRatingTextView;
     @BindView(R.id.btn_favorite_movie) Button favoriteMovieButton;
     @BindView(R.id.pb_video_trailers) ProgressBar movieTrailersProgressBar;
+    @BindView(R.id.pb_movie_reviews) ProgressBar movieReviewsProgressBar;
 
     private MovieInfo movieInfo;
     private MovieDetailsResponse movieDetailsResponse;
@@ -107,12 +114,13 @@ public class MovieDetailActivity extends AppCompatActivity implements UpdatedMov
         movieRatingString = String.format(movieRatingString, Double.toString(movieInfo.vote_average));
         movieRatingTextView.setText(movieRatingString);
 
-        // Trigger the movie details and movie videos fetch requests
+        // Trigger the movie details, videos and reviews fetch requests
         movieDbService.getMovieDetails(this, movieInfo.id);
         movieDbService.getMovieVideos(this, movieInfo.id);
+        movieDbService.getMovieReviews(this, movieInfo.id);
 
         if (movieDbDao.isFavoriteMovie(movieInfo.id)) {
-            favoriteMovieButton.setBackgroundColor(Color.YELLOW);
+            favoriteMovieButton.getBackground().setColorFilter(FAVORITED_COLOR_FILTER);
         }
     }
 
@@ -135,8 +143,12 @@ public class MovieDetailActivity extends AppCompatActivity implements UpdatedMov
         }
     }
 
+    /**
+     * To be triggered every time the favorite button is pressed.
+     */
     public void onFavoriteButtonPressed(View view) {
         if (!movieDbDao.isFavoriteMovie(movieInfo.id)) {
+            // This movie is currently unfavorited, so lets store this movie info
             MovieInfoDto movieInfoDto = MovieInfoDto.builder()
                     .overview(movieInfo.overview)
                     .posterImagePath(movieInfo.poster_path)
@@ -148,9 +160,11 @@ public class MovieDetailActivity extends AppCompatActivity implements UpdatedMov
                     .build();
 
             movieDbDao.writeFavoriteMovie(movieInfoDto);
-            favoriteMovieButton.setBackgroundColor(Color.YELLOW);
+            favoriteMovieButton.getBackground().setColorFilter(FAVORITED_COLOR_FILTER);
         } else {
-            // TODO: unfavorite
+            // This movie is already favorited... so unfavorite it by deleting the entry in our db.
+            movieDbDao.deleteFavoriteMovie(movieInfo.id);
+            favoriteMovieButton.getBackground().setColorFilter(null);
         }
 
     }
@@ -161,6 +175,8 @@ public class MovieDetailActivity extends AppCompatActivity implements UpdatedMov
             onMovieDetailsUpdated((MovieDetailsResponse) movieDataResponse);
         } else if (movieDataResponse instanceof MovieVideosResponse) {
             onMovieVideosUpdated((MovieVideosResponse) movieDataResponse);
+        } else if (movieDataResponse instanceof MovieReviewsResponse) {
+            onMovieReviewsUpdated((MovieReviewsResponse) movieDataResponse);
         }
     }
 
@@ -202,6 +218,47 @@ public class MovieDetailActivity extends AppCompatActivity implements UpdatedMov
                 // Append this to the list of trailer views
                 movieVideoContainer.addView(trailerViewHolder);
             }
+        }
+    }
+
+    private void onMovieReviewsUpdated(MovieReviewsResponse movieReviewsResponse) {
+        movieReviewsProgressBar.setVisibility(GONE);
+        LayoutInflater layoutInflater = getLayoutInflater();
+
+        int reviewCount = 0;
+        for (MovieReview movieReview : movieReviewsResponse.results) {
+            View reviewViewHolder = layoutInflater.inflate(R.layout.movie_review_item, null);
+
+            TextView tvMovieReviewContent = (TextView) reviewViewHolder.findViewById(R.id.tv_movie_review_content);
+            TextView tvMovieReviewAuthor = (TextView) reviewViewHolder.findViewById(R.id.tv_movie_review_author);
+            ImageView ivAuthorIcon = (ImageView) reviewViewHolder.findViewById(R.id.iv_author_icon);
+
+            tvMovieReviewContent.setText(movieReview.content);
+
+            // Make it so when the user clicks on the content of a review, it will collapse/expand.
+            tvMovieReviewContent.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    TextView textView = (TextView) v;
+
+                    if (textView.getMaxLines() == Integer.MAX_VALUE) {
+                        textView.setMaxLines(3);
+                    } else {
+                        textView.setMaxLines(Integer.MAX_VALUE);
+                    }
+
+                }
+            });
+
+            tvMovieReviewAuthor.setText(movieReview.author);
+
+
+            // We will color each author review icon a different color :)
+            int colorCodeIndex = reviewCount++ % AUTHOR_COLOR_CODES.length;
+            ivAuthorIcon.setColorFilter(AUTHOR_COLOR_CODES[colorCodeIndex], PorterDuff.Mode.MULTIPLY);
+
+            // Attache the review to the parent container so it is visible to the user.
+            movieReviewContainer.addView(reviewViewHolder);
         }
     }
 }

@@ -17,6 +17,7 @@ import com.brassbeluga.popularmovies.data.MovieDbContract.FavoriteMovieEntry;
  */
 public class MovieContentProvider extends ContentProvider {
     public static final int MOVIES = 100;
+    public static final int MOVIES_WITH_ID = 101;
 
     private MovieDbHelper movieDbHelper;
     private UriMatcher movieUriMatcher;
@@ -28,6 +29,7 @@ public class MovieContentProvider extends ContentProvider {
         // Initialize a UriMatcher that will match URIs supported by this content provider.
         movieUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
         movieUriMatcher.addURI(MovieDbContract.AUTHORITY, MovieDbContract.PATH_MOVIES_FAVORITES, MOVIES);
+        movieUriMatcher.addURI(MovieDbContract.AUTHORITY, MovieDbContract.PATH_MOVIES_FAVORITES + "/#", MOVIES_WITH_ID);
 
         return true;
     }
@@ -91,7 +93,26 @@ public class MovieContentProvider extends ContentProvider {
 
     @Override
     public int delete(@NonNull Uri uri, @Nullable String selection, @Nullable String[] selectionArgs) {
-        throw new UnsupportedOperationException("Operation not yet implemented");
+        SQLiteDatabase db = movieDbHelper.getWritableDatabase();
+
+        int matchCode = movieUriMatcher.match(uri);
+        int deletedRows;
+        switch (matchCode) {
+            case MOVIES_WITH_ID :
+                String deleteId = Long.toString(ContentUris.parseId(uri));
+                deletedRows = db.delete(FavoriteMovieEntry.TABLE_NAME, "_id=?", new String[]{deleteId});
+                break;
+            default:
+                throw new UnsupportedOperationException("Unknown uri: " + uri);
+        }
+
+        // Notify the resolver of a change and return the number of items deleted
+        if (deletedRows != 0) {
+            // A favorite movie was deleted, set notification
+            getContext().getContentResolver().notifyChange(uri, null);
+        }
+
+        return deletedRows;
     }
 
     @Override
