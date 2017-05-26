@@ -16,4 +16,8 @@
     <string name="movie_detail_runtime_formattable">%smin</string>
     <string name="movie_detail_rating_formattable">%s/10</string>
     <string name="movie_trailer_index_label">Trailer %s</string>
+
+
+    <string name="pref_movie_filter" translatable="false">current_movie_filter</string>
+
 </resources>

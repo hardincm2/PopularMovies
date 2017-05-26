@@ -1,6 +1,8 @@
 package com.brassbeluga.popularmovies.activity;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -47,6 +49,7 @@ public class MainActivity extends AppCompatActivity implements UpdatedMovieDataL
     private MovieViewRecyclerAdapter movieViewAdapter;
     private MovieFilter currentMovieFilter;
     private Menu menu;
+    private SharedPreferences sharedPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,6 +60,8 @@ public class MainActivity extends AppCompatActivity implements UpdatedMovieDataL
 
         // Configure the action bar for the main activity.
         setSupportActionBar(myToolbar);
+
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
         // Generate the span count
         int spanCount = getRecyclerViewSpanCount(getResources().getConfiguration());
@@ -97,9 +102,15 @@ public class MainActivity extends AppCompatActivity implements UpdatedMovieDataL
             }
         });
 
-        // Start off by getting popular movies
-        currentMovieFilter = MovieFilter.POPULAR;
-        movieDbService.getMovieInfo(this, currentMovieFilter, 0);
+        // Start off by getting popular movies if no preference is set.
+        String filterString = sharedPreferences.getString(getString(R.string.pref_movie_filter), POPULAR.toString());
+        currentMovieFilter = MovieFilter.valueOf(filterString);
+
+        if (currentMovieFilter == FAVORITE) {
+            updateAndDisplayFavoriteMovies();
+        } else {
+            movieDbService.getMovieInfo(this, currentMovieFilter, 0);
+        }
     }
 
     @Override
@@ -117,6 +128,14 @@ public class MainActivity extends AppCompatActivity implements UpdatedMovieDataL
                 menu.findItem(R.id.menu_sort_popular).setChecked(true);
             }
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString(getString(R.string.pref_movie_filter), currentMovieFilter.toString());
+        editor.commit();
     }
 
     @Override
